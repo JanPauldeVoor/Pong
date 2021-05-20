@@ -4,10 +4,11 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class PongGame extends SurfaceView {
+public class PongGame extends SurfaceView implements Runnable{
     // Are we Debugging?
     private final boolean DEBUGGING = true;
 
@@ -38,6 +39,12 @@ public class PongGame extends SurfaceView {
     private int mScore;
     private int mLives;
 
+    // Thread and two control variables
+    private Thread mGameThread = null;
+    // Volatile variable can be accessed from inside and outside the thread
+    private volatile boolean mPlaying;
+    private boolean mPaused = true;
+
     // PongGame Constructor
     // Called when mPongGame is created
     public PongGame(Context context, int x, int y){
@@ -64,6 +71,85 @@ public class PongGame extends SurfaceView {
         // Start game
         startNewGame();
 
+    }
+
+    // When mGameThread.start() starts the thread,
+    // the run activity is continuously called by Android
+    // because we implemented the Runnable interface.
+    //  Calling mGameThread.Join() will stop the thread
+    @Override
+    public void run(){
+        // mPlaying gives finer control
+        // than just relying on calls to run
+
+        // mPlaying must be true AND thread running for main loop execution
+        while (mPlaying){
+            // What time is it at start
+            long frameStartTime = System.currentTimeMillis();
+
+            // Call update method if game is not paused
+            if (!mPaused){
+                update();
+                // Now bat and abll are in new positions, detect collisions
+                detectCollisions();
+            }
+
+            // Movement and collisions have been handled so draw scene
+            draw();
+
+            // How long did frame / loop take?
+            long timeThisFrame = System.currentTimeMillis() - frameStartTime;
+
+            // Make sure timeThisFrame is at least 1ms
+            // Accidentally dividing by 0 crashes things
+
+            if (timeThisFrame > 0){
+                // Store the current frame rate in mFPS
+                mFPS = MILLIS_IN_SECOND / timeThisFrame;
+            }
+        }
+    }
+
+    private void update(){
+        // update bat and ball
+    }
+
+    private void detectCollisions(){
+        // Has bat hit ball?
+
+        // Has ball hit edge of screen?
+
+        // Bottom
+
+        // Top
+
+        // Left
+
+        // Right
+
+    }
+
+    // Method called by PongActivity when player quits the game
+    public void pause(){
+        // Set playing to false,
+        // Stopping thread isn't always instant
+        mPlaying = false;
+        try{
+            // Stop thread
+            mGameThread.join();
+        } catch (InterruptedException e){
+            Log.e("Error: ", "joining thread");
+        }
+    }
+
+    // Method called by PongActivity when player starts game
+    public void resume(){
+
+        mPlaying = true;
+        // Initialize the instance of Thread
+        mGameThread = new Thread(this);
+        // Start the Thread
+        mGameThread.start();
     }
 
     // Player has lost or is starting first game
