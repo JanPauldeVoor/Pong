@@ -26,6 +26,8 @@ public class PongGame extends SurfaceView implements Runnable{
     private SurfaceHolder mOurHolder;
     private Canvas mCanvas;
     private Paint mPaint;
+    private Paint mBatPaint;
+    private Paint mBallPaint;
 
     // How many frames per second did we get?
     private long mFPS;
@@ -82,6 +84,13 @@ public class PongGame extends SurfaceView implements Runnable{
         // getHolder: method of SurfaceView
         mOurHolder = getHolder();
         mPaint = new Paint();
+
+        // Choose a color to paint with
+        mPaint.setColor(Color.argb(255,255,255,255));
+
+        // Initialize random color variables
+        mBatPaint = new Paint();
+        mBallPaint = new Paint();
 
         // Initialize the bat and ball
         mBall = new Ball(mScreenX);
@@ -191,6 +200,19 @@ public class PongGame extends SurfaceView implements Runnable{
         mBat.update(mFPS);
     }
 
+    private void changeColor(){
+        final int MAX_RGB = 256;
+        final int MIN_RGB = 0;
+
+        mBallPaint.setColor(Color.argb(255, (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB),
+                (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB),
+                (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB) ));
+
+        mBatPaint.setColor(Color.argb(255, (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB),
+                (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB),
+                (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB) ));
+    }
+
     private void detectCollisions(){
         // Has bat hit ball?
         if (RectF.intersects(mBat.getRect(), mBall.getRect())){
@@ -198,6 +220,7 @@ public class PongGame extends SurfaceView implements Runnable{
             mBall.batBounce(mBat.getRect());
             mBall.increaseVelocity();
             mScore++;
+            changeColor();
             mSP.play(mBeepID, 1, 1, 0, 0, 1);
         }
 
@@ -207,6 +230,7 @@ public class PongGame extends SurfaceView implements Runnable{
         if (mBall.getRect().bottom > mScreenY){
             mBall.reverseYVelocity();
             mLives--;
+            changeColor();
             mSP.play(mBoopID, 1, 1, 0, 0, 1);
             if (mLives == 0) {
                 mPaused = true;
@@ -218,18 +242,21 @@ public class PongGame extends SurfaceView implements Runnable{
         if (mBall.getRect().top < 0){
             mBall.reverseYVelocity();
             mSP.play(mBoopID, 1, 1, 0, 0, 1);
+            changeColor();
         }
 
         // Left
         if (mBall.getRect().left < 0){
             mBall.reverseXVelocity();
             mSP.play(mBoopID, 1, 1, 0, 0, 1);
+            changeColor();
         }
 
         // Right
         if (mBall.getRect().right > mScreenX){
             mBall.reverseXVelocity();
             mSP.play(mBoopID, 1, 1, 0, 0, 1);
+            changeColor();
         }
     }
 
@@ -238,6 +265,8 @@ public class PongGame extends SurfaceView implements Runnable{
         // Set playing to false,
         // Stopping thread isn't always instant
         mPlaying = false;
+        mBallPaint = mPaint;
+        mBallPaint = mPaint;
         try{
             // Stop thread
             mGameThread.join();
@@ -250,6 +279,8 @@ public class PongGame extends SurfaceView implements Runnable{
     public void resume(){
 
         mPlaying = true;
+        mBallPaint = mPaint;
+        mBatPaint = mPaint;
         // Initialize the instance of Thread
         mGameThread = new Thread(this);
         // Start the Thread
@@ -275,11 +306,9 @@ public class PongGame extends SurfaceView implements Runnable{
             // Fill screen with solid color
             mCanvas.drawColor(Color.argb(255, 26, 128, 182));
 
-            // Choose a color to paint with
-            mPaint.setColor(Color.argb(255,255,255,255));
-
             // Draw the bat and ball
-            mCanvas.drawRect(mBall.getRect(), mPaint);
+            mCanvas.drawRect(mBall.getRect(), mBallPaint);
+            mCanvas.drawRect(mBat.getRect(), mBatPaint);
 
             // Choose the font size
             mPaint.setTextSize(mFontSize);
