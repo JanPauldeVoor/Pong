@@ -18,7 +18,11 @@ import android.view.SurfaceView;
 
 import java.io.IOException;
 
+/**
+ * This class contains the macro workings of the pong game
+ */
 public class PongGame extends SurfaceView implements Runnable{
+
     // Are we Debugging?
     private final boolean DEBUGGING = true;
 
@@ -46,6 +50,7 @@ public class PongGame extends SurfaceView implements Runnable{
     // The game objects
     private Bat mBat;
     private Ball mBall;
+    private Obstacle mObs;
 
     // The current score and lives remaining
     private int mScore;
@@ -64,8 +69,14 @@ public class PongGame extends SurfaceView implements Runnable{
     private int mBopID = -1;
     private int mMissID = -1;
 
-    // PongGame Constructor
-    // Called when mPongGame is created
+    /**
+     *  This is the constructor of the game state and initializes
+     *  the settings of the game
+     *
+     * @param context The context in which the game is being played
+     * @param x the horizontal size of the screen
+     * @param y the vertical size of the screen
+     */
     public PongGame(Context context, int x, int y){
         // Super.. calls parent class
         // constructor of SurfaceView provided by Android
@@ -95,6 +106,8 @@ public class PongGame extends SurfaceView implements Runnable{
         // Initialize the bat and ball
         mBall = new Ball(mScreenX);
         mBat = new Bat(mScreenX, mScreenY);
+        mObs = new Obstacle(mScreenX, mScreenY,
+                mScreenX / 2, mScreenY / 4, mScreenX / 3);
 
         // Prepare the SoundPool instance
         // Depending on version of Android
@@ -117,7 +130,7 @@ public class PongGame extends SurfaceView implements Runnable{
             AssetManager assetManager = context.getAssets();
             AssetFileDescriptor descriptor;
             descriptor = assetManager.openFd("boop.ogg");
-           mBoopID = mSP.load(descriptor, 0);
+            mBoopID = mSP.load(descriptor, 0);
         } catch (IOException e){
             Log.d("Error", "failed to load sound files");
         }
@@ -128,10 +141,9 @@ public class PongGame extends SurfaceView implements Runnable{
 
     }
 
-    // When mGameThread.start() starts the thread,
-    // the run activity is continuously called by Android
-    // because we implemented the Runnable interface.
-    //  Calling mGameThread.Join() will stop the thread
+    /**
+     * This method sets the runtime behaviour of the game
+     */
     @Override
     public void run(){
         // mPlaying gives finer control
@@ -145,7 +157,7 @@ public class PongGame extends SurfaceView implements Runnable{
             // Call update method if game is not paused
             if (!mPaused){
                 update();
-                // Now bat and abll are in new positions, detect collisions
+                // Now bat and ball are in new positions, detect collisions
                 detectCollisions();
             }
 
@@ -165,6 +177,11 @@ public class PongGame extends SurfaceView implements Runnable{
         }
     }
 
+    /**
+     * This method controls what happens each time the game screen is touched
+     * @param motionEvent State of the player touch input
+     * @return whether the event has been processed, true if handled, false if not
+     */
     @Override
     public boolean onTouchEvent(MotionEvent motionEvent){
         // This switch block replaces if statement from SubHunter
@@ -194,12 +211,19 @@ public class PongGame extends SurfaceView implements Runnable{
         return true;
     }
 
+    /**
+     * This method controls what happens each frame / loop in the game
+     */
     private void update(){
         // update bat and ball
         mBall.update(mFPS);
         mBat.update(mFPS);
+        mObs.update(mFPS);
     }
 
+    /**
+     * This method controls the randomization of colours in the game
+     */
     private void changeColor(){
         final int MAX_RGB = 256;
         final int MIN_RGB = 0;
@@ -211,18 +235,39 @@ public class PongGame extends SurfaceView implements Runnable{
         mBatPaint.setColor(Color.argb(255, (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB),
                 (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB),
                 (int)(Math.random() * (MAX_RGB - MIN_RGB + 1 ) + MIN_RGB) ));
+
     }
 
+    /**
+     * This method controls what happens when the ball collides with an object
+     * @param obj Rect object the ball collided with
+     */
+    private void collisionAction(RectF obj){
+        // Realistic-ish bounce
+        mBall.batBounce(obj);
+        mBall.increaseVelocity();
+        mScore++;
+        changeColor();
+        mSP.play(mBeepID, 1, 1, 0, 0, 1);
+    }
+
+    /**
+     * This method detects if the ball collided with another object or wall
+     */
     private void detectCollisions(){
         // Has bat hit ball?
-        if (RectF.intersects(mBat.getRect(), mBall.getRect())){
-            // Realistic-ish bounce
-            mBall.batBounce(mBat.getRect());
-            mBall.increaseVelocity();
-            mScore++;
-            changeColor();
-            mSP.play(mBeepID, 1, 1, 0, 0, 1);
+
+        if (RectF.intersects(mObs.getRect(), mBall.getRect())){
+
+            collisionAction(mObs.getRect());
         }
+
+
+        if (RectF.intersects(mBat.getRect(), mBall.getRect())){
+            Log.d("Debug", "hit object");
+            collisionAction(mBat.getRect());
+        }
+
 
         // Has ball hit edge of screen?
 
@@ -260,7 +305,9 @@ public class PongGame extends SurfaceView implements Runnable{
         }
     }
 
-    // Method called by PongActivity when player quits the game
+    /**
+     * This method controls what happens when the player pauses the game
+     */
     public void pause(){
         // Set playing to false,
         // Stopping thread isn't always instant
@@ -275,7 +322,9 @@ public class PongGame extends SurfaceView implements Runnable{
         }
     }
 
-    // Method called by PongActivity when player starts game
+    /**
+     * This method controls what happens when the game is started or restarted
+     */
     public void resume(){
 
         mPlaying = true;
@@ -287,17 +336,22 @@ public class PongGame extends SurfaceView implements Runnable{
         mGameThread.start();
     }
 
-    // Player has lost or is starting first game
+    /**
+     * This method resets the game state to the initial state
+     */
     private void startNewGame(){
         // Put the ball back to the starting position
         mBall.reset(mScreenX, mScreenY);
+        mObs.reset();
 
         // Reset the score and the player's chances
         mScore = 0;
         mLives = 3;
     }
 
-    // Draw the game objects and the HUD
+    /**
+     * This method draws all the objects and information to the game screen
+     */
     private void draw(){
         if (mOurHolder.getSurface().isValid()){
             // lock canvas ready to draw
@@ -309,6 +363,7 @@ public class PongGame extends SurfaceView implements Runnable{
             // Draw the bat and ball
             mCanvas.drawRect(mBall.getRect(), mBallPaint);
             mCanvas.drawRect(mBat.getRect(), mBatPaint);
+            mCanvas.drawRect(mObs.getRect(), mPaint);
 
             // Choose the font size
             mPaint.setTextSize(mFontSize);
@@ -328,7 +383,9 @@ public class PongGame extends SurfaceView implements Runnable{
         }
     }
 
-
+    /**
+     * This method prints the debugging text to the screen
+     */
     public void printDebuggingText(){
         int debugSize = mFontSize / 2;
         int debugStart = 150;

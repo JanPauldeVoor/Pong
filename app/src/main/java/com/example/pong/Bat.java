@@ -2,6 +2,9 @@ package com.example.pong;
 
 import android.graphics.RectF;
 
+/**
+ * This class contains the control information for the player controlled bat
+ */
 public class Bat {
     // These are all member variables (fields)
     // They all have the m prefix
@@ -23,6 +26,11 @@ public class Bat {
     // Starting with STOPPED condition
     private int mBatMoving = STOPPED;
 
+    /**
+     * This method initializes the initial data for a bat object
+     * @param sx The width of the game screen
+     * @param sy The height of the game screen
+     */
     public Bat(int sx, int sy){
         mScreenX = sx;
 
@@ -48,17 +56,27 @@ public class Bat {
         mBatSpeed = mScreenX;
     }
 
-    // Return a reference to the mRect object
+    /**
+     * This method returns a reference to the Rect object in the class
+     * @return reference to Rect object
+     */
     RectF getRect(){
         return mRect;
     }
 
-    // Update the movement state passed by onTouchEvent
+    /**
+     * This method changes the movement state of the object
+     * Either stopped, left, or right
+     * @param state new movement state
+     */
     void setMovementState(int state){
         mBatMoving = state;
     }
 
-    // Update bat each frame / loop
+    /**
+     * This method controls what happens each frame or loop
+     * @param fps how many frames per second are being processed in game
+     */
     void update(long fps){
         // Move the bat based on mBatMoving and speed of previous frame
         if (mBatMoving == LEFT){

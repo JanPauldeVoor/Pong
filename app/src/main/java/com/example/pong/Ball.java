@@ -3,6 +3,9 @@ package com.example.pong;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
+/**
+ * This class contains the control code for the ball object
+ */
 public class Ball {
     // These are all member variables (fields)
     // They all have the m prefix
@@ -14,8 +17,10 @@ public class Ball {
     private float mBallWidth;
     private float mBallHeight;
 
-    // This is the constructor method
-    // Called by PongGame class
+    /**
+     * This method initializes the data for a ball object
+     * @param screenX the horizontal width of the game screen
+     */
     public Ball(int screenX){
         // Make the ball square and 1% of screen width
         mBallWidth = screenX / 100;
@@ -28,14 +33,20 @@ public class Ball {
         mRect = new RectF();
     }
 
-    // Return a reference to mRect to PongGame
+    /**
+     * This method returns a reference to the Rect object in ball
+     * @return A reference to the Rect variable
+     */
     RectF getRect(){
         return mRect;
     }
 
-    // Update the ball position on each frame / loop
+    /**
+     * This method controls how the ball moves each time the method is called in run
+     * @param fps how many frames per second are being processed in game
+     */
     void update(long fps){
-        // Move the ball based on teh horizontal and vertical speed
+        // Move the ball based on the horizontal and vertical speed
         // and the current fps
 
         // Move the top left corner
@@ -47,16 +58,25 @@ public class Ball {
         mRect.bottom = mRect.top + mBallHeight;
     }
 
-    // Reverse the vertical direction of travel
+    /**
+     * This method reverses the vertical velocity of travel
+     */
     void reverseYVelocity(){
         mYVelocity = -mYVelocity;
     }
 
-    // Reverse the horizontal direction of travel
+    /**
+     * This method reverses the horizontal velocity of travel
+     */
     void reverseXVelocity(){
         mXVelocity = -mXVelocity;
     }
 
+    /**
+     * This method resets the ball into its initial state of play
+     * @param x horizontal width of the game screen
+     * @param y vertical height of the screen
+     */
     void reset(int x, int y){
         // Initialize the four points of the rectangle that defines the ball
         mRect.left = x / 2;
@@ -70,14 +90,19 @@ public class Ball {
         mXVelocity  = (x / 2);
     }
 
+    /**
+     * This method increases the rate of travel for the ball
+     */
     void increaseVelocity(){
         // Increase the speed by 10%
         mXVelocity = mXVelocity * 1.1f;
         mYVelocity = mYVelocity * 1.1f;
     }
 
-    // Bounce the ball back based on
-    // whether it hits the left or right-hand side
+    /**
+     * This method controls collision reaction based on where the ball hit the bat
+     * @param batPosition the current state of the rect object passed
+     */
     void batBounce(RectF batPosition){
         // Detect the center of the bat
         float batCenter = batPosition.left + (batPosition.width() / 2);
